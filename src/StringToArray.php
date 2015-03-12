@@ -8,7 +8,10 @@ namespace TDD;
  */
 class StringToArray
 {
-
+    /**
+     * Pattern used to identify multi line
+     * input strings with specified array keys.
+     */
     const FIRST_LABEL_SIGN = "#useFirstLineAsLabels";
 
     /**
@@ -20,35 +23,17 @@ class StringToArray
 
     /**
      * Return an array from input separated by commas.
-     *
-     * @param string $input
-     *
-     * @return array|null
-     */
-    public function oneLineStringInput($input)
-    {
-        $result = null;
-
-        if (true === is_string($input))
-        {
-            $result = explode(',', $input);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Return an array from input separated by commas.
      * Explode input by NL (\n) to one-line strings, and
      * return a 2 dimensional array (lines, values).
      *
      * If first line is "#useFirstLineAsLabels" then use the next line as labels.
      *
      * @param string $input
+     * @param OneLineParser $parser
      *
      * @return array|null
      */
-    public function multiLineStringInput($input)
+    public function multiLineStringInput($input, $parser)
     {
         $result    = null;
         $arrayKeys = null;
@@ -59,13 +44,13 @@ class StringToArray
 
             if ($lines[0] === self::FIRST_LABEL_SIGN)
             {
-                $arrayKeys = $this->oneLineStringInput($lines[1]);
+                $arrayKeys = $parser->oneLineStringInput($lines[1]);
                 $lines = array_slice($lines, 2);
             }
 
             foreach ($lines as $line)
             {
-                $result[] = $this->oneLineStringInput($line);
+                $result[] = $parser->oneLineStringInput($line);
             }
 
             if (true === is_array($arrayKeys) && count($result))

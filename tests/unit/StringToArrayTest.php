@@ -2,14 +2,21 @@
 
 namespace TDD\Test;
 
+use TDD\OneLineParser;
 use TDD\StringToArray;
 
 /**
  * Class StringToArrayTest
+ *
  * @package TDD\Test
  */
 class StringToArrayTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @var OneLineParser
+     */
+    private $oneLineParser;
+
     /**
      * @var StringToArray
      */
@@ -19,24 +26,12 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
 //                INIT TEST
 // ##########################################
 
-    /**
-     * Constructs a test case with the given name.
-     *
-     * @param string $name
-     * @param array  $data
-     * @param string $dataName
-     */
-    public function __construct($name = null, array $data = array(), $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-    }
-
-
-    /**
+   /**
      * Init test.
      */
     public function setUp()
     {
+        $this->oneLineParser = new OneLineParser();
         $this->stringToArray = new StringToArray();
     }
 
@@ -52,21 +47,6 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
 // ##########################################
 
     /**
-     * Test oneLineStringInput method.
-     *
-     * @param $expected
-     * @param $string
-     *
-     * @dataProvider dataForTestOneLineStringInput
-     */
-    public function testOneLineStringInput($string, $expected)
-    {
-        $result = $this->stringToArray->oneLineStringInput($string);
-
-        $this->assertEquals($expected, $result);
-    }
-
-    /**
      * Test multiLineStringInput method.
      *
      * @param $expected
@@ -76,9 +56,42 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
      */
     public function testMultiLineStringInput($string, $expected)
     {
-        $result = $this->stringToArray->multiLineStringInput($string);
+        $result = $this->stringToArray->multiLineStringInput($string, $this->oneLineParser);
 
         $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * Test that multiLineStringInput calls exactly 2 times the OneLineParser object's
+     * oneLineStringInput method in correct order with the exploded input \$string parts,
+     *
+     * @dataProvider dataForTestMultiLineCallsOneLineForExtract
+     */
+    public function testMultiLineCallsOneLineForExtract($string, $expected)
+    {
+        if (2 < count($expected))
+        {
+            // Testing at least 2 part input strings, and we dispose unneeded
+            // data, if received greater array from dataForTestMultiLineStringInput
+            $parts  = explode("\n", $string);
+            $string = sprintf("%s\n%s", $parts[0], $parts[1]);
+
+            $expected = array_slice($expected,0,2);
+        }
+
+        $oneLineParserMock = $this->getMockBuilder('OneLineParser')
+            ->setMethods(array('oneLineStringInput'))
+            ->getMock();
+
+        $oneLineParserMock->expects($this->exactly(2))
+            ->method("oneLineStringInput")
+            ->withConsecutive(
+                array($this->equalTo(implode(',', $expected[0]))),
+                array($this->equalTo(implode(',', $expected[1])))
+            );
+        ;
+
+        $this->stringToArray->multiLineStringInput($string, $oneLineParserMock);
     }
 
     /**
@@ -101,55 +114,26 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
     /**
      * @return array
      */
-    public function dataForTestOneLineStringInput()
-    {
-        return array(
-            array("a,b,c", array(
-                "a",
-                "b",
-                "c",
-            )),
-
-            array("100,982,444,990,1", array(
-                "100",
-                "982",
-                "444",
-                "990",
-                "1",
-            )),
-
-            array("Mark,Anthony,marka@lib.de", array(
-                "Mark",
-                "Anthony",
-                "marka@lib.de",
-            )),
-
-            array("foo,bar,baz", array(
-                "foo",
-                "bar",
-                "baz",
-            )),
-
-            array(array(), null), // negative case: not string
-        );
-    }
-
-    /**
-     * @return array
-     */
     public function dataForTestMultiLineStringInput()
     {
         return array(
-            array("211,22,35\n10,20,33", array(
-                array("211", "22", "35"),
-                array("10", "20", "33"),
-            )),
+            array(
+                "211,22,35\n10,20,33", array(
+                    array("211", "22", "35"),
+                    array("10", "20", "33"),
+                )
+            ),
 
-            array("luxembourg,kennedy,44\nbudapest,expo ter,5-7\ngyors,fo utca,9", array(
-                array("luxembourg", "kennedy", "44"),
-                array("budapest", "expo ter", "5-7"),
-                array("gyors", "fo utca", "9"),
-            )),
+            array(
+                "luxembourg,kennedy,44\n"
+                . "budapest,expo ter,5-7\n"
+                . "gyors,fo utca,9",
+                array(
+                    array("luxembourg", "kennedy", "44"),
+                    array("budapest", "expo ter", "5-7"),
+                    array("gyors", "fo utca", "9"),
+                )
+            ),
 
             array("foo,bar\nbaz,bah", array(
                 array("foo", "bar"),
@@ -163,18 +147,33 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
     /**
      * @return array
      */
+    public function dataForTestMultiLineCallsOneLineForExtract()
+    {
+        $data = $this->dataForTestMultiLineStringInput();
+
+        // remove negative testcase data (not needed for testing calls on mock)
+        unset($data[3]);
+
+        return $data;
+    }
+
+    /**
+     * @return array
+     */
     public function dataForTestMultiLineStringInputAcceptLabelsInFirstRow()
     {
         return array(
             array(
-                "#useFirstLineAsLabels\nName,Email,Phone\nMark,marc@be.com,998\nNoemi,noemi@ac.co.uk,888",
+                "#useFirstLineAsLabels\n"
+                . "Name,Email,Phone\n"
+                . "Mark,marc@be.com,998\n"
+                . "Noemi,noemi@ac.co.uk,888",
                 array(
                     array(
                         "Name"  => "Mark",
                         "Email" => "marc@be.com",
                         "Phone" => "998",
                     ),
-
                     array(
                         "Name"  => "Noemi",
                         "Email" => "noemi@ac.co.uk",
@@ -183,19 +182,31 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
                 )
             ),
 
-            array("#useFirstLineAsLabels\ncol1,col2\nfoo,bar\nbaz,bah", array(
+            array(
+                "#useFirstLineAsLabels\n"
+                . "col1,col2\n"
+                . "foo,bar\n"
+                . "baz,bah",
                 array(
-                    "col1" => "foo",
-                    "col2" => "bar",
+                    array(
+                        "col1" => "foo",
+                        "col2" => "bar",
+                    ),
+                    array(
+                        "col1" => "baz",
+                        "col2" => "bah",
+                    ),
                 ),
-                array(
-                    "col1" => "baz",
-                    "col2" => "bah",
-                ),
-            )),
+            ),
 
-            array(array(), null),                                                   // negative case: not string
-            array("#useFirstLineAsLabels\ncol1,col2,col3\nfoo,bar\nbaz,bah", null), // negative case: column size mismatch
+            array(array(), null),           // negative case: not string
+
+            array(                          // negative case: column size mismatch
+                "#useFirstLineAsLabels\n"
+                . "col1,col2,col3\n"
+                . "foo,bar\n"
+                . "baz,bah",
+                null),
         );
     }
 }
