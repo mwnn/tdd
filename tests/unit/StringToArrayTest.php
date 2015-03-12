@@ -81,6 +81,19 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
+    /**
+     * Test multiLineStringInput method accept labels in first row.
+     *
+     * @param $expected
+     * @param $string
+     *
+     * @dataProvider dataForTestMultiLineStringInputAcceptLabelsInFirstRow
+     */
+    public function testMultiLineStringInputAcceptLabelsInFirstRow($string, $expected)
+    {
+        $this->testMultiLineStringInput($string, $expected);
+    }
+
 // ##########################################
 //             DATA PROVIDERS
 // ##########################################
@@ -139,6 +152,42 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
             array("foo,bar\nbaz,bah", array(
                 array("foo", "bar"),
                 array("baz", "bah"),
+            )),
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function dataForTestMultiLineStringInputAcceptLabelsInFirstRow()
+    {
+        return array(
+            array(
+                "#useFirstLineAsLabels\nName,Email,Phone\nMark,marc@be.com,998\nNoemi,noemi@ac.co.uk,888",
+                array(
+                    array(
+                        "Name"  => "Mark",
+                        "Email" => "marc@be.com",
+                        "Phone" => "998",
+                    ),
+
+                    array(
+                        "Name"  => "Noemi",
+                        "Email" => "noemi@ac.co.uk",
+                        "Phone" => "888",
+                    ),
+                )
+            ),
+
+            array("#useFirstLineAsLabels\ncol1,col2\nfoo,bar\nbaz,bah", array(
+                array(
+                    "col1" => "foo",
+                    "col2" => "bar",
+                ),
+                array(
+                    "col1" => "baz",
+                    "col2" => "bah",
+                ),
             )),
         );
     }
