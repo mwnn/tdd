@@ -52,13 +52,31 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
 // ##########################################
 
     /**
+     * Test oneLineStringInput method.
+     *
      * @param $expected
      * @param $string
+     *
      * @dataProvider dataForTestOneLineStringInput
      */
     public function testOneLineStringInput($string, $expected)
     {
         $result = $this->stringToArray->oneLineStringInput($string);
+
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * Test multiLineStringInput method.
+     *
+     * @param $expected
+     * @param $string
+     *
+     * @dataProvider dataForTestMultiLineStringInput
+     */
+    public function testMultiLineStringInput($string, $expected)
+    {
+        $result = $this->stringToArray->multiLineStringInput($string);
 
         $this->assertEquals($expected, $result);
     }
@@ -97,6 +115,30 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
                 "foo",
                 "bar",
                 "baz",
+            )),
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function dataForTestMultiLineStringInput()
+    {
+        return array(
+            array("211,22,35\n10,20,33", array(
+                array("211", "22", "35"),
+                array("10", "20", "33"),
+            )),
+
+            array("luxembourg,kennedy,44\nbudapest,expo ter,5-7\ngyors,fo utca,9", array(
+                array("luxembourg", "kennedy", "44"),
+                array("budapest", "expo ter", "5-7"),
+                array("gyors", "fo utca", "9"),
+            )),
+
+            array("foo,bar\nbaz,bah", array(
+                array("foo", "bar"),
+                array("baz", "bah"),
             )),
         );
     }
