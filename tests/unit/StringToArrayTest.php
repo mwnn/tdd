@@ -129,6 +129,8 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
                 "bar",
                 "baz",
             )),
+
+            array(array(), null), // negative case: not string
         );
     }
 
@@ -153,6 +155,8 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
                 array("foo", "bar"),
                 array("baz", "bah"),
             )),
+
+            array(array(), null), // negative case: not string
         );
     }
 
@@ -189,6 +193,9 @@ class StringToArrayTest extends \PHPUnit_Framework_TestCase
                     "col2" => "bah",
                 ),
             )),
+
+            array(array(), null),                                                   // negative case: not string
+            array("#useFirstLineAsLabels\ncol1,col2,col3\nfoo,bar\nbaz,bah", null), // negative case: column size mismatch
         );
     }
 }

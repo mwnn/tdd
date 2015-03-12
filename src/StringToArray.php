@@ -68,14 +68,22 @@ class StringToArray
                 $result[] = $this->oneLineStringInput($line);
             }
 
-            if (true === is_array($arrayKeys))
+            if (true === is_array($arrayKeys) && count($result))
             {
-                $tmp = array_map(function($line) use ($arrayKeys)
+                if (count($arrayKeys) !== count($result[0]))
                 {
-                    return array_combine($arrayKeys, $line);
-                }, $result);
+                    $result = null;
+                }
+                else
+                {
+                    $tmp = array_map(function($line) use ($arrayKeys)
+                    {
+                        return array_combine($arrayKeys, $line);
+                    }, $result);
 
-                $result = $tmp;
+                    $result = $tmp;
+                }
+
             }
         }
 
